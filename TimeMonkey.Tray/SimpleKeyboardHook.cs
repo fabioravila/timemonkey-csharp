@@ -61,9 +61,10 @@ namespace TimeMonkey.Tray
         /// <returns>Hook ID</returns>
         private IntPtr SetHook(HookHandler proc)
         {
-            using (ProcessModule module = Process.GetCurrentProcess().MainModule)
+            using (var process = Process.GetCurrentProcess())
+            using (var module = process.MainModule)
             {
-                return SetWindowsHookEx(WinAPI.WH_KEYBOARD_LL, proc, module.BaseAddress, 0);
+                return SetWindowsHookEx(WH_KEYBOARD_LL, proc, module.BaseAddress, 0);
             }
         }
 
@@ -74,25 +75,19 @@ namespace TimeMonkey.Tray
         {
             if (nCode >= 0)
             {
+
                 var iwParam = (KeyboardMessages)wParam;
+                var keyHookStruct = (KBDLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(KBDLLHOOKSTRUCT));
 
-                var keyHookStruct = (CWPSTRUCT)Marshal.PtrToStructure(lParam, typeof(CWPSTRUCT));
+                var keyData = (VKeys)keyHookStruct.vkCode;
 
-                var isExtendedKey = (keyHookStruct.flags & 0x1) > 0;
-                var keyData = (VKeys)Marshal.ReadInt32(lParam);
+                var keyModifiers = ReturnModifiers();
 
                 var isDown = (iwParam == KeyboardMessages.WM_KEYDOWN || iwParam == KeyboardMessages.WM_SYSKEYDOWN);
                 var isUp = (iwParam == KeyboardMessages.WM_KEYUP || iwParam == KeyboardMessages.WM_SYSKEYUP);
 
-                //check modifiers
-                // Is Control being held down?
-                var control = CheckModifier(VKeys.CONTROL);
-                // Is Shift being held down?
-                var shift = CheckModifier(VKeys.SHIFT);
-                // Is Alt being held down?
-                var alt = CheckModifier(VKeys.MENU);
 
-
+                var isExtendedKey = (keyHookStruct.flags & 0x1) > 0;
 
                 if (isDown)
                 {
@@ -110,6 +105,23 @@ namespace TimeMonkey.Tray
             return CallNextHookEx(hookID, nCode, wParam, lParam);
         }
 
+        static VKeys ReturnModifiers()
+        {
+            //check modifiers
+            // Is Control being held down?
+            var control = CheckModifier(VKeys.CONTROL);
+            // Is Shift being held down?
+            var shift = CheckModifier(VKeys.SHIFT);
+            // Is Alt being held down?
+            var alt = CheckModifier(VKeys.MENU);
+
+            //Append with flags
+            return (control ? VKeys.CONTROL : VKeys.NONE) |
+                   (shift ? VKeys.SHIFT : VKeys.NONE) |
+                   (alt ? VKeys.MENU : VKeys.NONE);
+
+        }
+
         static bool CheckModifier(VKeys vKey)
         {
             return (GetKeyState((int)vKey) & 0x8000) > 0;
@@ -122,12 +134,37 @@ namespace TimeMonkey.Tray
         {
             Uninstall();
         }
-
         public enum KeyState
         {
             DOWN = 0,
             UP = 1
         }
-
     }
+
+    public class SimpleKeyEventArgs : EventArgs
+    {
+        public VKeys Key { get; private set; }
+
+        VKeys modifiers = VKeys.NONE;
+
+        public bool Alt { get { return (modifiers & VKeys.MENU) == VKeys.MENU; } }
+        public bool Shift { get { return (modifiers & VKeys.SHIFT) == VKeys.SHIFT; } }
+        public bool Control { get { return (modifiers & VKeys.CONTROL) == VKeys.CONTROL; } }
+
+        public SimpleKeyEventArgs(VKeys key, VKeys modifiers) : this(key)
+        {
+            this.modifiers = modifiers;
+        }
+
+        public SimpleKeyEventArgs(VKeys key)
+        {
+            Key = key;
+        }
+    }
+
+    //public class SimpleKeyPressEventArgs : SimpleKeyEventArgs
+    //{
+
+    //}
+
 }

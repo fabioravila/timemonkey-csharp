@@ -69,11 +69,10 @@ namespace TimeMonkey.Tray
 
 
         [StructLayout(LayoutKind.Sequential)]
-        internal struct CWPSTRUCT
+        internal struct KBDLLHOOKSTRUCT
         {
-            public uint virtualKeyCode;
+            public uint vkCode;
             public int scanCode;
-
             public uint flags;
             public uint time;
             public IntPtr dwExtraInfo;
@@ -89,8 +88,11 @@ namespace TimeMonkey.Tray
         /// </summary>
         public enum VKeys
         {
-            // Losely based on http://www.pinvoke.net/default.aspx/Enums/VK.html
+            //KEY_CODE =  0x0000FFFF, // 65535 --only valid for flags
+            //MODIFIERS = -0x00010000, //-65536 --only valid for flags
 
+            // Losely based on http://www.pinvoke.net/default.aspx/Enums/VK.html
+            NONE = 0X00,
             LBUTTON = 0x01,     // Left mouse button
             RBUTTON = 0x02,     // Right mouse button
             CANCEL = 0x03,      // Control-break processing
