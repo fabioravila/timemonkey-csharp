@@ -12,3 +12,4 @@ The goal is to create a functional application, which performs a usage log on th
 Several codes and have been taken from internet examples, github and stackoverflow responses, I will try to relate them all here.
 
 github.com/gmamaladze/globalmousekeyhook - For mouse and keyboard hook
+github.com/gmamaladze/globalmousekeyhook - For mouse and keyboard hook extensions and rich details
