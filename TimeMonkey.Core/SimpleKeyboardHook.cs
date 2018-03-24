@@ -3,10 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using static TimeMonkey.Tray.WinAPI;
-using static TimeMonkey.Tray.WinAPI.User32;
+using static TimeMonkey.Core.WinAPI;
+using static TimeMonkey.Core.WinAPI.User32;
 
-namespace TimeMonkey.Tray
+namespace TimeMonkey.Core
 {
     public class SimpleKeyboardHook
     {

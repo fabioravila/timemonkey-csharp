@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TimeMonkey.Tray
+namespace TimeMonkey.Core
 {
     public static class WinAPI
     {

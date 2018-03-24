@@ -50,9 +50,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TimeMonkey.Tray\TimeMonkey.Tray.csproj">
-      <Project>{e64aecea-41b6-4e93-999a-06ba6f6d3e5f}</Project>
-      <Name>TimeMonkey.Tray</Name>
+    <ProjectReference Include="..\TimeMonkey.Core\TimeMonkey.Core.csproj">
+      <Project>{92f62d84-9f1f-484e-bafe-1827f26eb2a7}</Project>
+      <Name>TimeMonkey.Core</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

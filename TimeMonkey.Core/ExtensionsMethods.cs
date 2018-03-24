@@ -1,6 +1,6 @@
 ﻿
 
-namespace TimeMonkey.Tray
+namespace TimeMonkey.Core
 {
     internal static class ExtensionsMethods
     {

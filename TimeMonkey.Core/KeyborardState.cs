@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using static TimeMonkey.Tray.WinAPI;
+using static TimeMonkey.Core.WinAPI;
 
-namespace TimeMonkey.Tray
+namespace TimeMonkey.Core
 {
     /// <summary>
     ///     Contains a snapshot of a keyboard state at certain moment and provides methods

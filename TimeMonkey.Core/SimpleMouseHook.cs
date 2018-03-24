@@ -5,10 +5,10 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using static TimeMonkey.Tray.WinAPI;
-using static TimeMonkey.Tray.WinAPI.User32;
+using static TimeMonkey.Core.WinAPI;
+using static TimeMonkey.Core.WinAPI.User32;
 
-namespace TimeMonkey.Tray
+namespace TimeMonkey.Core
 {
     /// <summary>
     /// Class for intercepting low level Windows mouse hooks.

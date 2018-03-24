@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
-using static TimeMonkey.Tray.WinAPI;
-using static TimeMonkey.Tray.WinAPI.User32;
+using static TimeMonkey.Core.WinAPI;
+using static TimeMonkey.Core.WinAPI.User32;
 
-namespace TimeMonkey.Tray
+namespace TimeMonkey.Core
 {
 
     public class NanoMouseHook
