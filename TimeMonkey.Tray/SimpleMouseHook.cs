@@ -5,7 +5,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using static TimeMonkey.Tray.WinAPI;
 using static TimeMonkey.Tray.WinAPI.User32;
 
@@ -33,6 +32,8 @@ namespace TimeMonkey.Tray
         /// <param name="mouseStruct">MSLLHOOKSTRUCT mouse structure</param>
         public delegate void GenericHookCallback(MSLLHOOKSTRUCT mouseStruct, MouseMessages mouseEvent);
 
+
+        private readonly int systemDoubleClickTime;
 
         #region Events
         public event MouseHookCallback LeftButtonDown;
@@ -74,6 +75,11 @@ namespace TimeMonkey.Tray
             hookID = IntPtr.Zero;
         }
 
+        public SimpleMouseHook()
+        {
+            systemDoubleClickTime = GetDoubleClickTime();
+        }
+
         /// <summary>
         /// Destructor. Unhook current hook
         /// </summary>
@@ -103,30 +109,109 @@ namespace TimeMonkey.Tray
             // parse system messages
             if (nCode >= 0)
             {
-                if (MouseMessages.WM_LBUTTONDOWN == (MouseMessages)wParam)
-                    LeftButtonDown?.Invoke((MSLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MSLLHOOKSTRUCT)));
-                if (MouseMessages.WM_LBUTTONUP == (MouseMessages)wParam)
-                    LeftButtonUp?.Invoke((MSLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MSLLHOOKSTRUCT)));
-                if (MouseMessages.WM_RBUTTONDOWN == (MouseMessages)wParam)
-                    RightButtonDown?.Invoke((MSLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MSLLHOOKSTRUCT)));
-                if (MouseMessages.WM_RBUTTONUP == (MouseMessages)wParam)
-                    RightButtonUp?.Invoke((MSLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MSLLHOOKSTRUCT)));
-                if (MouseMessages.WM_MOUSEMOVE == (MouseMessages)wParam)
-                    MouseMove?.Invoke((MSLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MSLLHOOKSTRUCT)));
-                if (MouseMessages.WM_MOUSEWHEEL == (MouseMessages)wParam)
-                    MouseWheel?.Invoke((MSLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MSLLHOOKSTRUCT)));
-                if (MouseMessages.WM_LBUTTONDBLCLK == (MouseMessages)wParam)
-                    DoubleClick?.Invoke((MSLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MSLLHOOKSTRUCT)));
-                if (MouseMessages.WM_MBUTTONDOWN == (MouseMessages)wParam)
-                    MiddleButtonDown?.Invoke((MSLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MSLLHOOKSTRUCT)));
-                if (MouseMessages.WM_MBUTTONUP == (MouseMessages)wParam)
-                    MiddleButtonUp?.Invoke((MSLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MSLLHOOKSTRUCT)));
+                var data = (MSLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MSLLHOOKSTRUCT));
+                var message = (MouseMessages)wParam;
+
+
+                switch (message)
+                {
+                    case MouseMessages.WM_MOUSEMOVE:
+                        break;
+                    case MouseMessages.WM_LBUTTONDOWN:
+                        break;
+                    case MouseMessages.WM_RBUTTONDOWN:
+                        break;
+                    case MouseMessages.WM_MBUTTONDOWN:
+                        break;
+                    case MouseMessages.WM_LBUTTONUP:
+                        break;
+                    case MouseMessages.WM_RBUTTONUP:
+                        break;
+                    case MouseMessages.WM_MBUTTONUP:
+                        break;
+                    case MouseMessages.WM_MOUSEWHEEL:
+                        break;
+                    case MouseMessages.WM_MOUSEHWHEEL:
+                        break;
+                    case MouseMessages.WM_LBUTTONDBLCLK:
+                        break;
+                    case MouseMessages.WM_RBUTTONDBLCLK:
+                        break;
+                    case MouseMessages.WM_MBUTTONDBLCLK:
+                        break;
+                    case MouseMessages.WM_XBUTTONDOWN:
+                        break;
+                    case MouseMessages.WM_XBUTTONUP:
+                        break;
+                    case MouseMessages.WM_XBUTTONDBLCLK:
+                        break;
+                    default:
+                        break;
+                }
+
+
+                if (MouseMessages.WM_LBUTTONDOWN == message)
+                    LeftButtonDown?.Invoke(data);
+                if (MouseMessages.WM_LBUTTONUP == message)
+                    LeftButtonUp?.Invoke(data);
+                if (MouseMessages.WM_RBUTTONDOWN == message)
+                    RightButtonDown?.Invoke(data);
+                if (MouseMessages.WM_RBUTTONUP == message)
+                    RightButtonUp?.Invoke(data);
+                if (MouseMessages.WM_MOUSEMOVE == message)
+                    MouseMove?.Invoke(data);
+                if (MouseMessages.WM_MOUSEWHEEL == message)
+                    MouseWheel?.Invoke(data);
+                if (MouseMessages.WM_LBUTTONDBLCLK == message)
+                    DoubleClick?.Invoke(data);
+                if (MouseMessages.WM_MBUTTONDOWN == message)
+                    MiddleButtonDown?.Invoke(data);
+                if (MouseMessages.WM_MBUTTONUP == message)
+                    MiddleButtonUp?.Invoke(data);
 
                 //Generic Event, fire with type
-                MouseEvent?.Invoke((MSLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MSLLHOOKSTRUCT)), (MouseMessages)wParam);
-
+                MouseEvent?.Invoke(data, message);
             }
             return CallNextHookEx(hookID, nCode, wParam, lParam);
         }
     }
+
+
+    public class SimpleMouseEventArgs : EventArgs
+    {
+        public SimpleMouseButtons Button { get; }
+        public int Clicks { get; }
+        public int X { get; }
+        public int Y { get; }
+        public int Delta { get; }
+        public int TimeSpan { get; }
+
+        public bool IsButtonUp { get; }
+        public bool IsButtonDown { get; }
+
+
+        //public Point Location { get; }
+        public SimpleMouseEventArgs(SimpleMouseButtons button, int clicks, int x, int y, int delta, int timespan, bool isButtonUp, bool isButtonDown)
+        {
+            Button = button;
+            Clicks = clicks;
+            X = x;
+            Y = y;
+            Delta = delta;
+            TimeSpan = timespan;
+            IsButtonUp = isButtonUp;
+            IsButtonDown = isButtonDown;
+        }
+    }
+
+    public enum SimpleMouseButtons
+    {
+        None = 0,
+        Left = 1048576,
+        Right = 2097152,
+        Middle = 4194304,
+        XButton1 = 8388608,
+        XButton2 = 16777216
+    }
+
 }

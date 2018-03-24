@@ -65,6 +65,18 @@ namespace TimeMonkey.Tray
             public uint flags;
             public uint time;
             public IntPtr dwExtraInfo;
+
+            public int wheelDelta
+            {
+                get
+                {
+                    var v = (int)((mouseData & 0xFFFF0000) >> 16);
+
+                    if (v > 120) { v -= (ushort.MaxValue + 1); };
+                    return v;
+
+                }
+            }
         }
 
 
@@ -82,10 +94,13 @@ namespace TimeMonkey.Tray
         #endregion
 
 
+
+
         #region Keyboard Constants and Structs
         /// <summary>
         /// Virtual Keys
         /// </summary>
+        [Flags]
         public enum VKeys
         {
             //KEY_CODE =  0x0000FFFF, // 65535 --only valid for flags
@@ -293,12 +308,44 @@ namespace TimeMonkey.Tray
             OEM_CLEAR = 0xFE    // Clear key
         }
 
+
+        /// <summary>
+        ///     MapVirtualKeys uMapType
+        /// </summary>
+        internal enum MapType
+        {
+            /// <summary>
+            ///     uCode is a virtual-key code and is translated into an unshifted character value in the low-order word of the return
+            ///     value. Dead keys (diacritics) are indicated by setting the top bit of the return value. If there is no translation,
+            ///     the function returns 0.
+            /// </summary>
+            MAPVK_VK_TO_VSC = 0,
+
+            /// <summary>
+            ///     uCode is a virtual-key code and is translated into a scan code. If it is a virtual-key code that does not
+            ///     distinguish between left- and right-hand keys, the left-hand scan code is returned. If there is no translation, the
+            ///     function returns 0.
+            /// </summary>
+            MAPVK_VSC_TO_VK = 1,
+
+            /// <summary>
+            ///     uCode is a scan code and is translated into a virtual-key code that does not distinguish between left- and
+            ///     right-hand keys. If there is no translation, the function returns 0.
+            /// </summary>
+            MAPVK_VK_TO_CHAR = 2,
+
+            /// <summary>
+            ///     uCode is a scan code and is translated into a virtual-key code that distinguishes between left- and right-hand
+            ///     keys. If there is no translation, the function returns 0.
+            /// </summary>
+            MAPVK_VSC_TO_VK_EX = 3
+        }
+
         #endregion
 
         public static class User32
         {
             public delegate IntPtr HookHandler(int nCode, IntPtr wParam, IntPtr lParam);
-
 
             [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
             public static extern IntPtr SetWindowsHookEx(int idHook, HookHandler lpfn, IntPtr hMod, uint dwThreadId);
@@ -314,7 +361,7 @@ namespace TimeMonkey.Tray
             public static extern IntPtr GetForegroundWindow();
 
             [DllImport("user32.dll")]
-            public static extern IntPtr GetWindowThreadProcessId(IntPtr hWnd, out uint ProcessId);
+            public static extern IntPtr GetWindowThreadProcessId(IntPtr hWnd, out int ProcessId);
 
             [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
             public static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int count);
@@ -350,9 +397,49 @@ namespace TimeMonkey.Tray
             [DllImport("user32")]
             internal static extern int GetDoubleClickTime();
 
+            /// <summary>
+            ///     The GetKeyboardState function copies the status of the 256 virtual keys to the
+            ///     specified buffer.
+            /// </summary>
+            /// <param name="pbKeyState">
+            ///     [in] Pointer to a 256-byte array that contains keyboard key states.
+            /// </param>
+            /// <returns>
+            ///     If the function succeeds, the return value is nonzero.
+            ///     If the function fails, the return value is zero. To get extended error information, call GetLastError.
+            /// </returns>
+            /// <remarks>
+            ///     http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/winui/windowsuserinterface/userinput/keyboardinput/keyboardinputreference/keyboardinputfunctions/toascii.asp
+            /// </remarks>
+            [DllImport("user32.dll")]
+            public static extern int GetKeyboardState(byte[] pbKeyState);
+
+            /// <summary>
+            ///     Translates (maps) a virtual-key code into a scan code or character value, or translates a scan code into a
+            ///     virtual-key code.
+            /// </summary>
+            /// <param name="uCode">
+            ///     [in] The virtual key code or scan code for a key. How this value is interpreted depends on the
+            ///     value of the uMapType parameter.
+            /// </param>
+            /// <param name="uMapType">
+            ///     [in] The translation to be performed. The value of this parameter depends on the value of the
+            ///     uCode parameter.
+            /// </param>
+            /// <param name="dwhkl">[in] The input locale identifier used to translate the specified code.</param>
+            /// <returns></returns>
+            [DllImport("user32.dll", CharSet = CharSet.Auto)]
+            internal static extern int MapVirtualKeyEx(int uCode, int uMapType, IntPtr dwhkl);
 
             [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
             public static extern short GetKeyState(int vKey);
+
+            [DllImport("user32.dll", CharSet = CharSet.Auto)]
+            internal static extern IntPtr GetKeyboardLayout(int dwLayout);
+
+            [DllImport("user32.dll")]
+            public static extern int ToUnicodeEx(int wVirtKey, int wScanCode, byte[] lpKeyState,
+                                                 [Out] [MarshalAs(UnmanagedType.LPWStr, SizeConst = 64)] StringBuilder pwszBuff, int cchBuff, int wFlags, IntPtr dwhkl);
         }
 
 
@@ -364,5 +451,9 @@ namespace TimeMonkey.Tray
             [DllImport("kernel32")]
             public static extern int GetCurrentThreadId();
         }
+
+
+
+
     }
 }

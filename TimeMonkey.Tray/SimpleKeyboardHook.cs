@@ -1,11 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using static TimeMonkey.Tray.WinAPI;
 using static TimeMonkey.Tray.WinAPI.User32;
 
@@ -22,14 +19,31 @@ namespace TimeMonkey.Tray
         /// Function that will be called when defined events occur
         /// </summary>
         /// <param name="key">VKeys</param>
-        public delegate void KeyboardHookCallback(VKeys key);
-        public delegate void GenericKeyboardHookCallback(VKeys key, KeyState mode);
+        public delegate void KeyboardHookCallback(SimpleKeyEventArgs args);
+        public delegate void KeyboardPressHookCallback(SimpleKeyPressEventArgs args);
 
         #region Events
         public event KeyboardHookCallback KeyDown;
         public event KeyboardHookCallback KeyUp;
+        public event KeyboardHookCallback KeyEvent;
 
-        public event GenericKeyboardHookCallback KeyEvent;
+        private int keyPressEventCount = 0;
+        private event KeyboardPressHookCallback keyPressEvent;
+        public event KeyboardPressHookCallback KeyPressEvent
+        {
+            add
+            {
+                keyPressEvent += value;
+                keyPressEventCount++;
+            }
+
+            remove
+            {
+                keyPressEvent -= value;
+                keyPressEventCount--;
+            }
+        }
+
         #endregion
 
         /// <summary>
@@ -77,28 +91,55 @@ namespace TimeMonkey.Tray
             {
 
                 var iwParam = (KeyboardMessages)wParam;
-                var keyHookStruct = (KBDLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(KBDLLHOOKSTRUCT));
+                var keyStruct = (KBDLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(KBDLLHOOKSTRUCT));
 
-                var keyData = (VKeys)keyHookStruct.vkCode;
-
+                var keyData = (VKeys)keyStruct.vkCode;
                 var keyModifiers = ReturnModifiers();
 
-                var isDown = (iwParam == KeyboardMessages.WM_KEYDOWN || iwParam == KeyboardMessages.WM_SYSKEYDOWN);
+                //NOTE: It is possible to key isDown && isUp OR !isDown && !isUp
                 var isUp = (iwParam == KeyboardMessages.WM_KEYUP || iwParam == KeyboardMessages.WM_SYSKEYUP);
+                var isDown = (iwParam == KeyboardMessages.WM_KEYDOWN || iwParam == KeyboardMessages.WM_SYSKEYDOWN);
 
+                //NOT NOW
+                //var isExtendedKey = (keyHookStruct.flags & 0x1) > 0;
 
-                var isExtendedKey = (keyHookStruct.flags & 0x1) > 0;
+                var keyArgs = new SimpleKeyEventArgs(keyData, isUp, isDown, (int)keyStruct.time, keyModifiers);
 
-                if (isDown)
-                {
-                    KeyDown?.Invoke(keyData);
-                    KeyEvent?.Invoke(keyData, KeyState.DOWN);
-                }
 
                 if (isUp)
                 {
-                    KeyUp?.Invoke(keyData);
-                    KeyEvent?.Invoke(keyData, KeyState.UP);
+                    KeyUp?.Invoke(keyArgs);
+                    KeyEvent?.Invoke(keyArgs);
+                }
+
+                if (isDown)
+                {
+                    KeyDown?.Invoke(keyArgs);
+                    KeyEvent?.Invoke(keyArgs);
+                }
+
+
+                //Has key press handler
+                if (isDown && keyPressEventCount > 0)
+                {
+                    if (keyStruct.vkCode == (int)VKeys.PACKET)
+                    {
+                        var ch = (char)keyStruct.scanCode;
+                        if (!ch.IsNonChar())
+                            keyPressEvent?.Invoke(new SimpleKeyPressEventArgs(ch, (int)keyStruct.time));
+                    }
+                    else
+                    {
+                        KeyboardNative.TryGetCharFromKeyboardState((int)keyStruct.vkCode, keyStruct.scanCode, (int)keyStruct.flags, out char[] chars);
+
+                        foreach (var ch in chars)
+                        {
+                            if (!ch.IsNonChar())
+                            {
+                                keyPressEvent?.Invoke(new SimpleKeyPressEventArgs(ch, (int)keyStruct.time));
+                            }
+                        }
+                    }
                 }
             }
 
@@ -127,6 +168,7 @@ namespace TimeMonkey.Tray
             return (GetKeyState((int)vKey) & 0x8000) > 0;
         }
 
+
         /// <summary>
         /// Destructor. Unhook current hook
         /// </summary>
@@ -143,28 +185,43 @@ namespace TimeMonkey.Tray
 
     public class SimpleKeyEventArgs : EventArgs
     {
-        public VKeys Key { get; private set; }
+        public VKeys Key { get; }
+        public bool IsUp { get; }
+        public bool IsDown { get; }
+        public int Timestamp { get; }
+        public VKeys Modifiers { get; }
 
-        VKeys modifiers = VKeys.NONE;
+        public bool Alt { get { return (Modifiers & VKeys.MENU) == VKeys.MENU; } }
+        public bool Shift { get { return (Modifiers & VKeys.SHIFT) == VKeys.SHIFT; } }
+        public bool Control { get { return (Modifiers & VKeys.CONTROL) == VKeys.CONTROL; } }
 
-        public bool Alt { get { return (modifiers & VKeys.MENU) == VKeys.MENU; } }
-        public bool Shift { get { return (modifiers & VKeys.SHIFT) == VKeys.SHIFT; } }
-        public bool Control { get { return (modifiers & VKeys.CONTROL) == VKeys.CONTROL; } }
-
-        public SimpleKeyEventArgs(VKeys key, VKeys modifiers) : this(key)
+        public SimpleKeyEventArgs(VKeys key, bool isUp, bool isDown, int timestamp, VKeys modifiers) : this(key, isUp, isDown, timestamp)
         {
-            this.modifiers = modifiers;
+            Modifiers = modifiers;
         }
 
-        public SimpleKeyEventArgs(VKeys key)
+        public SimpleKeyEventArgs(VKeys key, bool isUp, bool isDown, int timestamp)
         {
             Key = key;
+            IsUp = isUp;
+            IsDown = isDown;
+            Timestamp = timestamp;
+            Modifiers = VKeys.NONE;
         }
     }
 
-    //public class SimpleKeyPressEventArgs : SimpleKeyEventArgs
-    //{
+    public class SimpleKeyPressEventArgs : EventArgs
+    {
+        public char KeyChar { get; }
+        public int Timestamp { get; }
 
-    //}
+        public SimpleKeyPressEventArgs(char keyChar, int timestamp)
+        {
+            KeyChar = keyChar;
+            Timestamp = timestamp;
+        }
+    }
 
 }
+
+

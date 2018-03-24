@@ -14,6 +14,7 @@ namespace TimeMonkey.Playgroud
         static Stopwatch afk_stopwatch = new Stopwatch();
         static SimpleMouseHook mouseHook = new SimpleMouseHook();
         static SimpleKeyboardHook keyboardHook = new SimpleKeyboardHook();
+        static NanoHook nanoHook = new NanoHook();
         static TimeSpan akf_treshold = TimeSpan.FromSeconds(20);
 
         static void Main(string[] args)
@@ -24,9 +25,11 @@ namespace TimeMonkey.Playgroud
             {
                 mouseHook.MouseEvent += MouseHook_MouseEvent;
                 keyboardHook.KeyEvent += KeyboardHook_KeyEvent;
+                nanoHook.Event += NanoHook_Event;
 
                 //mouseHook.Install();
-                keyboardHook.Install();
+                //keyboardHook.Install();
+                nanoHook.Install();
 
                 Application.Run();
             }
@@ -44,14 +47,20 @@ namespace TimeMonkey.Playgroud
             }
         }
 
-        static void KeyboardHook_KeyEvent(WinAPI.VKeys key, SimpleKeyboardHook.KeyState mode)
+        private static void NanoHook_Event(NanoHookEventArgs args)
         {
-            Console.WriteLine($"KEYBOARD: {key} {mode}");
+            Console.WriteLine($"NANO: {args.EventType.ToString().ToUpper()}");
         }
+
+        private static void KeyboardHook_KeyEvent(SimpleKeyEventArgs args)
+        {
+            Console.WriteLine($"KEYBOARD: KEY:{args.Key} IS:{(args.IsUp ? "UP" : "DOWN")} WITH:{args.Modifiers}");
+        }
+
 
         static void MouseHook_MouseEvent(WinAPI.MSLLHOOKSTRUCT mouseStruct, WinAPI.MouseMessages mouseEvent)
         {
-            Console.WriteLine($"MOUSE: {mouseEvent} x:{mouseStruct.pt.x} y:{mouseStruct.pt.y}");
+            Console.WriteLine($"MOUSE: {mouseEvent} x:{mouseStruct.pt.x} y:{mouseStruct.pt.y} data:{mouseStruct.mouseData} wheeldelta: {mouseStruct.wheelDelta}");
         }
 
         static void Application_ApplicationExit(object sender, EventArgs e)
@@ -74,6 +83,13 @@ namespace TimeMonkey.Playgroud
                 keyboardHook.KeyEvent -= KeyboardHook_KeyEvent;
                 keyboardHook.Uninstall();
                 keyboardHook = null;
+            }
+
+            if (nanoHook != null)
+            {
+                nanoHook.Event -= NanoHook_Event;
+                nanoHook.Uninstall();
+                nanoHook = null;
             }
 
             afk_stopwatch?.Stop();

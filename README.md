@@ -8,6 +8,21 @@ I always look for new projects to train my programming. As I work with C # again
 
 The goal is to create a functional application, which performs a usage log on the software, windows and urls.
 
+# Goals
+* Map time spent on each Windows operating system window
+* Map the conditions of use of the computer, based on the events of the keyboard and mouse
+* Identify behavior by mouse and keyboard, like stress, and irritability
+
+
+# Milestone
+[] Group and organize codes and structs for for WinAPI Interop.
+[] Create a simple and rich classes for Mouse ans Keyboard Monitor
+[] Create simple and direct classes for window monitors
+[] Identify PC presence, afk and lock screen
+[] Criar a RepositoryProvider to allow the implementation of a storage and sending the collected information
+[] Tray application with some config, alerts and info forms
+[] Always alive app, to prevent accidentally close
+
 # OpenSource Codes
 Several codes and have been taken from internet examples, github and stackoverflow responses, I will try to relate them all here.
 
