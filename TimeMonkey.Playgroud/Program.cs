@@ -21,11 +21,15 @@ namespace TimeMonkey.Playgroud
             {
                 mouseHook.MouseEvent += MouseHook_MouseEvent;
                 keyboardHook.KeyEvent += KeyboardHook_KeyEvent;
+                keyboardHook.KeyPressEvent += KeyboardHook_KeyPressEvent;
                 nanoHook.Event += NanoHook_Event;
 
                 //mouseHook.Install();
-                //keyboardHook.Install();
-                nanoHook.Install();
+                keyboardHook.Install();
+                //nanoHook.Install();
+                //nanoHook.Install(HookEventType.KeyBoard);
+                //nanoHook.Install(HookEventType.Mouse);
+                nanoHook.Install(HookEventType.KeyBoard | HookEventType.Mouse);
 
                 Application.Run();
             }
@@ -43,6 +47,11 @@ namespace TimeMonkey.Playgroud
             }
         }
 
+        private static void KeyboardHook_KeyPressEvent(SimpleKeyPressEventArgs args)
+        {
+            //Console.WriteLine($"KEYBOARD: KEYPRESS:{args.KeyChar}");
+        }
+
         private static void NanoHook_Event(NanoHookEventArgs args)
         {
             Console.WriteLine($"NANO: {args.EventType.ToString().ToUpper()}");
@@ -50,7 +59,7 @@ namespace TimeMonkey.Playgroud
 
         private static void KeyboardHook_KeyEvent(SimpleKeyEventArgs args)
         {
-            Console.WriteLine($"KEYBOARD: KEY:{args.Key} IS:{(args.IsUp ? "UP" : "DOWN")} WITH:{args.Modifiers}");
+            //Console.WriteLine($"KEYBOARD: KEY:{args.Key} IS:{(args.IsUp ? "UP" : "DOWN")} WITH:{args.Modifiers}");
         }
 
 

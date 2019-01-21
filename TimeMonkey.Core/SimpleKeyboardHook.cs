@@ -132,11 +132,14 @@ namespace TimeMonkey.Core
                     {
                         KeyboardNative.TryGetCharFromKeyboardState((int)keyStruct.vkCode, keyStruct.scanCode, (int)keyStruct.flags, out char[] chars);
 
-                        foreach (var ch in chars)
+                        if (chars != null)
                         {
-                            if (!ch.IsNonChar())
+                            foreach (var ch in chars)
                             {
-                                keyPressEvent?.Invoke(new SimpleKeyPressEventArgs(ch, (int)keyStruct.time));
+                                if (!ch.IsNonChar())
+                                {
+                                    keyPressEvent?.Invoke(new SimpleKeyPressEventArgs(ch, (int)keyStruct.time));
+                                }
                             }
                         }
                     }

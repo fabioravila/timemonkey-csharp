@@ -112,22 +112,32 @@ namespace TimeMonkey.Core
                 var data = (MSLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MSLLHOOKSTRUCT));
                 var message = (MouseMessages)wParam;
 
+                var isDown = false;
+                var isUp = false;
+                SimpleMouseButtons button;
+
 
                 switch (message)
                 {
                     case MouseMessages.WM_MOUSEMOVE:
                         break;
                     case MouseMessages.WM_LBUTTONDOWN:
+                        isDown = true;
                         break;
                     case MouseMessages.WM_RBUTTONDOWN:
+                        isDown = true;
                         break;
                     case MouseMessages.WM_MBUTTONDOWN:
+                        isDown = true;
                         break;
                     case MouseMessages.WM_LBUTTONUP:
+                        isUp = true;
                         break;
                     case MouseMessages.WM_RBUTTONUP:
+                        isUp = true;
                         break;
                     case MouseMessages.WM_MBUTTONUP:
+                        isUp = true;
                         break;
                     case MouseMessages.WM_MOUSEWHEEL:
                         break;
@@ -140,8 +150,10 @@ namespace TimeMonkey.Core
                     case MouseMessages.WM_MBUTTONDBLCLK:
                         break;
                     case MouseMessages.WM_XBUTTONDOWN:
+                        isDown = true;
                         break;
                     case MouseMessages.WM_XBUTTONUP:
+                        isUp = true;
                         break;
                     case MouseMessages.WM_XBUTTONDBLCLK:
                         break;
@@ -188,6 +200,16 @@ namespace TimeMonkey.Core
 
         public bool IsButtonUp { get; }
         public bool IsButtonDown { get; }
+
+        public bool WheelScrolled
+        {
+            get { return Delta != 0; }
+        }
+
+        public bool Clicked
+        {
+            get { return Clicks > 0; }
+        }
 
 
         //public Point Location { get; }
